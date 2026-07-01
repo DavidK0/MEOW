@@ -1,0 +1,7 @@
+.vs/
+data/
+docs/
+lib/
+src/.vs/
+src/bin/
+src/obj/
