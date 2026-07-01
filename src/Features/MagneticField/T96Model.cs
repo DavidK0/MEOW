@@ -3,7 +3,7 @@ using KSA;
 
 namespace MEOW;
 
-public sealed class T96Model : IFieldModel {
+public sealed class T96Model : IBodyFrameFieldModel {
     private const double EarthRadiusMeters = 6371200.0;
 
     private readonly IGsmTransform _gsm;

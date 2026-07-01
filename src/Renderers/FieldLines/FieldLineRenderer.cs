@@ -29,18 +29,10 @@ public sealed class FieldLineOverlay : IOverlay {
     private int _nextSlotIndex;
     private bool _initialSetPublished;
 
-    private readonly Func<BodyOverlayProfile, IFieldModel?> _getFieldModel;
-
-    public FieldLineOverlay(Func<BodyOverlayProfile, IFieldModel?> getFieldModel) {
-        _getFieldModel = getFieldModel;
-    }
-
     public bool IsEnabled(MEOWSettings settings) => settings.ShowFieldLines;
 
     public void Update(BodyOverlayContext context, MEOWSettings settings, double dt) {
-        IFieldModel? model = _getFieldModel(context.Profile);
-        if(model == null)
-            return;
+        IFieldModel model = context.FieldModel;
 
         model.BeginSimulationStep();
 
@@ -62,9 +54,6 @@ public sealed class FieldLineOverlay : IOverlay {
         Camera camera,
         BodyOverlayContext context,
         MEOWSettings settings) {
-
-        if(_getFieldModel(context.Profile) == null)
-            return;
 
         foreach(FieldLineSlot slot in _lineSlots) {
             FieldLine? line = slot.CurrentLine;
@@ -88,7 +77,8 @@ public sealed class FieldLineOverlay : IOverlay {
             MinRadius: bodyRadius * MinTraceRadiusMultiplier,
             MaxRadius: bodyRadius * MaxTraceRadiusMultiplier,
             MaxStepsPerDirection: MaxTraceStepsPerDirection,
-            MaxVisualPoints: MaxVisualPointsPerLine);
+            MaxVisualPoints: MaxVisualPointsPerLine,
+            Domain: context.Domain);
     }
 
     private void EnsureLineSlots(double bodyRadius) {

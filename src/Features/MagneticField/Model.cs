@@ -3,22 +3,28 @@ using KSA;
 
 namespace MEOW;
 
-public sealed class CompositeMagneticFieldModel : IFieldModel {
-    private readonly IFieldModel[] _models;
+public interface IBodyFrameFieldModel {
+    void BeginSimulationStep() { }
 
-    public CompositeMagneticFieldModel(params IFieldModel[] models) {
+    double3 EvaluateField(double3 positionBodyFrame);
+}
+
+public sealed class CompositeMagneticFieldModel : IBodyFrameFieldModel {
+    private readonly IBodyFrameFieldModel[] _models;
+
+    public CompositeMagneticFieldModel(params IBodyFrameFieldModel[] models) {
         _models = models;
     }
 
     public void BeginSimulationStep() {
-        foreach(IFieldModel model in _models)
+        foreach(IBodyFrameFieldModel model in _models)
             model.BeginSimulationStep();
     }
 
     public double3 EvaluateField(double3 positionBodyFrame) {
         double3 total = new double3(0.0, 0.0, 0.0);
 
-        foreach(IFieldModel model in _models) {
+        foreach(IBodyFrameFieldModel model in _models) {
             total += model.EvaluateField(positionBodyFrame);
         }
 
@@ -39,17 +45,54 @@ public static class MagneticFieldModelFactory {
 
         IGRFCoefficients igrf = IGRFCoefficients.LoadFromFile(igrf14coeffsPath);
 
-        IGsmTransform gsm = new ApproxGsmTransform(igrf);
+        Func<IParentBody?> resolveEarth = () =>
+            CelestialBodyResolver.FindParentBody("Earth");
+        IGsmTransform gsm = new ApproxGsmTransform(igrf, resolveEarth);
 
-        IFieldModel field = new CompositeMagneticFieldModel(
+        IBodyFrameFieldModel bodyFrameField = new CompositeMagneticFieldModel(
             new IGRFModel(igrf),
             new T96Model(gsm));
+        IFieldModel field = new BodyFrameFieldModelAdapter(
+            bodyFrameField,
+            resolveEarth);
 
         return new BodyOverlayProfile {
             BodyName = "Earth",
+            ResolveBody = resolveEarth,
             MagneticFieldModel = field,
+            GravitationalFieldModel = new GravitationalFieldModel(),
             GsmTransform = gsm
         };
+    }
+}
+
+public sealed class BodyFrameFieldModelAdapter : IFieldModel {
+    private readonly IBodyFrameFieldModel _field;
+    private readonly Func<IParentBody?> _resolveBody;
+
+    public BodyFrameFieldModelAdapter(
+        IBodyFrameFieldModel field,
+        Func<IParentBody?> resolveBody) {
+
+        _field = field;
+        _resolveBody = resolveBody;
+    }
+
+    public void BeginSimulationStep() {
+        _field.BeginSimulationStep();
+    }
+
+    public double3 EvaluateField(double3 positionEcl) {
+        IParentBody? body = _resolveBody();
+        if(body == null)
+            return default;
+
+        var localToEcl = body.GetCci2Cce();
+        var eclToLocal = localToEcl.Inverse();
+        double3 positionBodyFrame =
+            eclToLocal * (positionEcl - body.GetPositionEcl());
+        double3 fieldBodyFrame = _field.EvaluateField(positionBodyFrame);
+        return localToEcl * fieldBodyFrame;
     }
 }
 
@@ -67,6 +110,7 @@ public interface IGsmTransform {
 
 public sealed class ApproxGsmTransform : IGsmTransform {
     private readonly IGRFCoefficients _igrf;
+    private readonly Func<IParentBody?> _resolveEarth;
 
     private const double BasisUpdateAngleRadians = 1.0e-6;
     private static readonly double BasisUpdateDotThreshold =
@@ -80,12 +124,18 @@ public sealed class ApproxGsmTransform : IGsmTransform {
     private double3 _yGsmBody;
     private double3 _zGsmBody;
 
-    public ApproxGsmTransform(IGRFCoefficients igrf) {
+    public ApproxGsmTransform(
+        IGRFCoefficients igrf,
+        Func<IParentBody?> resolveEarth) {
+
         _igrf = igrf;
+        _resolveEarth = resolveEarth;
     }
 
     public void BeginSimulationStep() {
-        IParentBody earth = Program.ControlledVehicle.Orbit.Parent; // Assuming the controlled vehicle is orbiting Earth
+        IParentBody? earth = _resolveEarth();
+        if(earth == null)
+            return;
         double3 earthPosEcl = earth.GetPositionEcl();
         Celestial earthCelestial = (Celestial)earth;
         IParentBody sun = earthCelestial.Parent;

@@ -1,7 +1,10 @@
-﻿namespace MEOW;
+﻿using KSA;
+
+namespace MEOW;
 
 public sealed class BodyOverlayProfile {
     public required string BodyName { get; init; }
+    public required Func<IParentBody?> ResolveBody { get; init; }
 
     public IFieldModel? MagneticFieldModel { get; init; }
     public bool HasGlobalMagneticField => MagneticFieldModel != null;

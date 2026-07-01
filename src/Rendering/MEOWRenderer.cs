@@ -8,10 +8,8 @@ public unsafe static class MEOWRenderer {
     private static readonly OverlayManager _overlayManager = new();
 
     public static void Init() {
-        _overlayManager.Register(new FieldLineOverlay(
-            profile => profile.MagneticFieldModel));
-        _overlayManager.Register(new GridLineOverlay(
-            profile => profile.MagneticFieldModel));
+        _overlayManager.Register(new FieldLineOverlay());
+        _overlayManager.Register(new GridLineOverlay());
     }
 
     public static void Draw() {
@@ -21,8 +19,19 @@ public unsafe static class MEOWRenderer {
         if(vehicle == null || camera == null)
             return;
 
-        var parentBody = vehicle.Orbit?.Parent;
-        if(parentBody == null)
+        BodyOverlayProfile? profile = BodyOverlayProfileRegistry.Get("Earth");
+        if(profile == null)
+            return;
+
+        IParentBody? domainBody = profile.ResolveBody();
+        if(domainBody == null)
+            return;
+
+        IFieldModel? fieldModel =
+            MEOWSettingsStore.Current.UseGravitationalField
+                ? profile.GravitationalFieldModel
+                : profile.MagneticFieldModel;
+        if(fieldModel == null)
             return;
 
         ImGuiViewport* viewport = ImGui.GetMainViewport();
@@ -30,21 +39,10 @@ public unsafe static class MEOWRenderer {
         if(draw_list == null)
             return;
 
-        BodyOverlayProfile? profile = BodyOverlayProfileRegistry.Get("Earth");
-
-        if(profile == null)
-            return;
-
-        var cciToCce = parentBody.GetCci2Cce();
-        var cceToCci = cciToCce.Inverse();
-
         var context = new BodyOverlayContext {
             Time = Universe.GetElapsedSimTime(),
-            BodyRadius = parentBody.MeanRadius,
-
-            BodyToWorld = pCci => parentBody.GetPositionEcl() + cciToCce * pCci,
-            WorldToBody = pEcl => cceToCci * (pEcl - parentBody.GetPositionEcl()),
-
+            Domain = FieldRenderDomain.AroundBody(domainBody),
+            FieldModel = fieldModel,
             Profile = profile
         };
 

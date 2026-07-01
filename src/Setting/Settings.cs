@@ -5,6 +5,7 @@ namespace MEOW;
 public sealed class MEOWSettings {
     public bool ShowFieldLines = true;
     public bool ShowGridLines;
+    public bool UseGravitationalField;
     public bool ShowRadiationBelts = true;
     public bool ShowMagnetopause = true;
     public bool ShowMagnetotail = true;
@@ -16,6 +17,7 @@ public sealed class MEOWSettings {
         return new MEOWSettings {
             ShowFieldLines = ShowFieldLines,
             ShowGridLines = ShowGridLines,
+            UseGravitationalField = UseGravitationalField,
             ShowRadiationBelts = ShowRadiationBelts,
             ShowMagnetopause = ShowMagnetopause,
             ShowMagnetotail = ShowMagnetotail,

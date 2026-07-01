@@ -95,7 +95,7 @@ public sealed class IGRFCoefficients {
     }
 }
 
-public sealed class IGRFModel : IFieldModel {
+public sealed class IGRFModel : IBodyFrameFieldModel {
     private const int NMax = IGRFCoefficients.MaxDegree;
 
     // IGRF reference radius, in meters.

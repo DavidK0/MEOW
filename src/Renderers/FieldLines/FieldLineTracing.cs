@@ -15,7 +15,8 @@ internal readonly record struct FieldTraceOptions(
     double MinRadius,
     double MaxRadius,
     int MaxStepsPerDirection,
-    int MaxVisualPoints);
+    int MaxVisualPoints,
+    FieldRenderDomain Domain);
 
 internal sealed class FieldLineBuilder {
     private const int MinimumPointCount = 8;
@@ -149,7 +150,9 @@ internal sealed class FieldTracer {
     }
 
     private double3 FieldDirection(double3 position) {
-        double3 field = _model.EvaluateField(position);
+        double3 positionEcl = _options.Domain.LocalToEclPoint(position);
+        double3 fieldEcl = _model.EvaluateField(positionEcl);
+        double3 field = _options.Domain.EclToLocalVector(fieldEcl);
         double length = VectorMath.Length(field);
 
         return length < 1e-12

@@ -28,7 +28,10 @@ public class MEOWEntryPoint {
 
     [ModMenuEntry("MEOW")]
     public static void DrawMenu() {
-        ImGui.Text("Planetary Magnetic Fields");
+        ImGui.Text("Vector Fields");
+        ImGui.Checkbox(
+            "Use Gravitational Field",
+            ref MEOWSettingsStore.Current.UseGravitationalField);
         ImGui.Checkbox("Field Lines", ref MEOWSettingsStore.Current.ShowFieldLines);
         ImGui.Checkbox("Grid Lines", ref MEOWSettingsStore.Current.ShowGridLines);
 
