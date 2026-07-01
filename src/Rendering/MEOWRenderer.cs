@@ -10,6 +10,8 @@ public unsafe static class MEOWRenderer {
     public static void Init() {
         _overlayManager.Register(new FieldLineOverlay(
             profile => profile.MagneticFieldModel));
+        _overlayManager.Register(new GridLineOverlay(
+            profile => profile.MagneticFieldModel));
     }
 
     public static void Draw() {

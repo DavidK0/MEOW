@@ -30,6 +30,7 @@ public class MEOWEntryPoint {
     public static void DrawMenu() {
         ImGui.Text("Planetary Magnetic Fields");
         ImGui.Checkbox("Field Lines", ref MEOWSettingsStore.Current.ShowFieldLines);
+        ImGui.Checkbox("Grid Lines", ref MEOWSettingsStore.Current.ShowGridLines);
 
         // Not implemented yet, but leaving this here for future reference
         //ImGui.Checkbox("Radiation Belts", ref MEOWSettingsStore.Current.ShowRadiationBelts);
