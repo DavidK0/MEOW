@@ -10,10 +10,10 @@ public sealed class OverlayManager {
         _overlays.Add(overlay);
     }
 
-    public void Update(BodyOverlayContext context, MEOWSettings settings) {
+    public void Update(BodyOverlayContext context, MEOWSettings settings, double dt) {
         foreach(var overlay in _overlays) {
             if(overlay.IsEnabled(settings))
-                overlay.Update(context, settings);
+                overlay.Update(context, settings, dt);
         }
     }
 

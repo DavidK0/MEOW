@@ -19,12 +19,11 @@ public class MEOWEntryPoint {
         MEOWSettingsStore.Load();
         SaveLoadObserver.ApplyPatches(_harmony);
 
-        var igrf = MagneticFieldData.LoadIgrf14();
+        MEOWRenderer.Init();
 
-        BodyOverlayProfileRegistry.Register(new BodyOverlayProfile {
-            BodyName = "Earth",
-            MagneticFieldModel = new IgrfMagneticFieldModel(igrf)
-        });
+        BodyOverlayProfile earthProfile = MagneticFieldModelFactory.CreateEarthProfile();
+
+        BodyOverlayProfileRegistry.Register(earthProfile);
     }
 
     [ModMenuEntry("MEOW")]

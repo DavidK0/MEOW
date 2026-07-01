@@ -3,8 +3,11 @@
 public sealed class BodyOverlayProfile {
     public required string BodyName { get; init; }
 
-    public IMagneticFieldModel? MagneticFieldModel { get; init; }
+    public IFieldModel? MagneticFieldModel { get; init; }
     public bool HasGlobalMagneticField => MagneticFieldModel != null;
+    public IFieldModel? GravitationalFieldModel { get; init; }
+    public bool HasGlobalGravitationalField => GravitationalFieldModel != null;
+    public IGsmTransform? GsmTransform { get; init; }
 }
 
 public static class BodyOverlayProfileRegistry {

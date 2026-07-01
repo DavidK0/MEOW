@@ -4,23 +4,7 @@ using System.Globalization;
 
 namespace MEOW;
 
-public static class MagneticFieldData {
-    public static IgrfCoefficients LoadIgrf14() {
-        string userDocs = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
-
-        string igrf14coeffsPath = Path.Combine(
-            userDocs,
-            "My Games",
-            "Kitten Space Agency",
-            "mods",
-            "MEOW",
-            "igrf14coeffs.txt");
-
-        return IgrfCoefficients.LoadFromFile(igrf14coeffsPath);
-    }
-}
-
-public sealed class IgrfCoefficients {
+public sealed class IGRFCoefficients {
     public const int MaxDegree = 13;
 
     // Coefficients indexed as [n, m].
@@ -29,7 +13,7 @@ public sealed class IgrfCoefficients {
     private readonly double[,] _gSv = new double[MaxDegree + 1, MaxDegree + 1];
     private readonly double[,] _hSv = new double[MaxDegree + 1, MaxDegree + 1];
 
-    private IgrfCoefficients() {
+    private IGRFCoefficients() {
     }
 
     public double GetG(int n, int m, double decimalYear) {
@@ -42,11 +26,11 @@ public sealed class IgrfCoefficients {
         return _h2025[n, m] + _hSv[n, m] * dt;
     }
 
-    public static IgrfCoefficients LoadFromFile(string path) {
+    public static IGRFCoefficients LoadFromFile(string path) {
         if(!File.Exists(path))
             throw new FileNotFoundException("Could not find IGRF coefficient file.", path);
 
-        var coeffs = new IgrfCoefficients();
+        var coeffs = new IGRFCoefficients();
 
         foreach(string rawLine in File.ReadLines(path)) {
             string line = rawLine.Trim();
@@ -93,27 +77,45 @@ public sealed class IgrfCoefficients {
 
         return coeffs;
     }
+
+    public double3 GetDipoleNorthCcf(double decimalYear) {
+        double g10 = GetG(1, 0, decimalYear);
+        double g11 = GetG(1, 1, decimalYear);
+        double h11 = GetH(1, 1, decimalYear);
+
+        // KSA/CCF convention:
+        // X = lon 0 equator
+        // Y = lon 90 east equator
+        // Z = geographic north
+        return VectorMath.Normalize(new double3(
+            -g11,
+            -h11,
+            -g10
+        ));
+    }
 }
 
-public sealed class IgrfMagneticFieldModel : IMagneticFieldModel {
-    private const int NMax = IgrfCoefficients.MaxDegree;
+public sealed class IGRFModel : IFieldModel {
+    private const int NMax = IGRFCoefficients.MaxDegree;
 
     // IGRF reference radius, in meters.
     // The IGRF spherical-harmonic expansion uses a = 6371.2 km.
     private const double ReferenceRadiusMeters = 6371200.0;
 
-    private readonly IgrfCoefficients _coeffs;
+    private readonly IGRFCoefficients _coeffs;
 
     // Schmidt normalization and recursion constants.
     private readonly double[,] _snorm = new double[NMax + 1, NMax + 1];
     private readonly double[,] _k = new double[NMax + 1, NMax + 1];
 
-    public IgrfMagneticFieldModel(IgrfCoefficients coeffs) {
+    public IGRFModel(IGRFCoefficients coeffs) {
         _coeffs = coeffs;
         BuildSchmidtNormalization();
     }
 
-    public double3 EvaluateField(double3 positionBodyFrame, SimTime time) {
+    public double3 EvaluateField(double3 positionBodyFrame) {
+        //SimTime time = Universe.GetElapsedSimTime();
+        //double years = time.Years;
         double decimalYear = 2025.0;
 
         // KSA body frame -> IGRF frame
@@ -284,31 +286,5 @@ public sealed class IgrfMagneticFieldModel : IMagneticFieldModel {
                     / ((2.0 * n - 1.0) * (2.0 * n - 3.0));
             }
         }
-    }
-}
-
-public interface IMagneticFieldModel {
-    double3 EvaluateField(double3 positionBodyFrame, SimTime time);
-}
-
-public sealed class DipoleMagneticFieldModel : IMagneticFieldModel {
-    private readonly double3 _axisBodyFrame;
-
-    public DipoleMagneticFieldModel(double3 axisBodyFrame) {
-        _axisBodyFrame = VectorMath.Normalize(axisBodyFrame);
-    }
-
-    public double3 EvaluateField(double3 positionBodyFrame, SimTime time) {
-        // Placeholder dipole-ish field. Not used by the radial proof of concept yet.
-        var r = positionBodyFrame;
-        double len = VectorMath.Length(r);
-
-        if(len <= 0.000001)
-            return new double3(0, 0, 0);
-
-        var n = r / len;
-        double mdotr = VectorMath.Dot(_axisBodyFrame, n);
-
-        return (3.0 * mdotr * n - _axisBodyFrame) / (len * len * len);
     }
 }

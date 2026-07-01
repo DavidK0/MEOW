@@ -1,9 +1,12 @@
 # MEOW
 MEOW (More Environmental Overlays and Windows) is a mod for Kitten Space Agency that displays solar and planetary phenomenona, whether or not they are actually modeled in KSA. My goal is to recreate the sort of diagrams one might find in an astronomy textbook, in the 3D environment of KSA.
 
+# Current features
+* Earth's magnetosphere
+
 # Planned features
-* Magnetic field lines/magnetosphere/bow shock/aurora zones
-* Hadley/farrel/polar cells
+* Extended magnetic field lines (other planets, the rest of the solar system)
+* More magnetosphere related displays (bow shock)
 * Radiation belts
 * Average Ocean currents
 * Lagrange points

@@ -7,8 +7,9 @@ namespace MEOW;
 public unsafe static class MEOWRenderer {
     private static readonly OverlayManager _overlayManager = new();
 
-    static MEOWRenderer() {
-        _overlayManager.Register(new MagneticFieldOverlay());
+    public static void Init() {
+        _overlayManager.Register(new FieldLineOverlay(
+            profile => profile.MagneticFieldModel));
     }
 
     public static void Draw() {
@@ -27,7 +28,7 @@ public unsafe static class MEOWRenderer {
         if(draw_list == null)
             return;
 
-        var profile = BodyOverlayProfileRegistry.Get("Earth");
+        BodyOverlayProfile? profile = BodyOverlayProfileRegistry.Get("Earth");
 
         if(profile == null)
             return;
@@ -45,7 +46,7 @@ public unsafe static class MEOWRenderer {
             Profile = profile
         };
 
-        _overlayManager.Update(context, MEOWSettingsStore.Current);
+        _overlayManager.Update(context, MEOWSettingsStore.Current, 1d/60d);
         _overlayManager.Draw(draw_list.Value, camera, context, MEOWSettingsStore.Current);
 
         ImGui.End();
