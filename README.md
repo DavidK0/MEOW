@@ -3,6 +3,7 @@ MEOW (More Environmental Overlays and Windows) is a mod for Kitten Space Agency 
 
 # Current features
 * Earth's magnetosphere/magnetotail
+* The gravitational field
 * Two field renderers: field lines and grid lines
 
 # Planned features
@@ -12,7 +13,7 @@ MEOW (More Environmental Overlays and Windows) is a mod for Kitten Space Agency 
 * Radiation belts
 * Average Ocean currents
 * Lagrange points
-* Gravitational equipotential surfaces (similar to hill sphere model)
+* Field equipotential surfaces (similar to hill sphere model)
 * Crust age/thickness
 * Tectonic plates/motions/boundary types
 * Tidal forces
